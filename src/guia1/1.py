@@ -16,9 +16,6 @@ def train(data,y_d,w, tr):
         
         for j in range(len(w)):
             w[j] = w[j] + tr/2 * (y_d[i] - y) * x[j]
-            
-
-        #print(w)
     return w
 
 def getTestError(data,y_d,w):
@@ -37,43 +34,27 @@ def getTestError(data,y_d,w):
             acum = acum + 1
     
     return acum * 1/len(data)
-            
 
-
-# 1 IMPORT CSV
+# IMPORT CSV
 filename = 'OR_90_tst.csv'
 data = np.genfromtxt(filename, delimiter=',')
 
-# 2 CHECK DATA
-# for i in range(len(data)):
-#     #print(data[i])
-    
-# 3 PLOT DATA
+# PLOT DATA
 plt.figure()
 for i in range(len(data)):
     plt.plot(data[i][0],data[i][1],'ro')
 
 
-# 4 GENERATE PERCEPTRON WEIGHTS
+# GENERATE PERCEPTRON WEIGHTS
 w =  np.random.rand(3)
-
-w_h = [ w ] # w history
-
-
+w_h = [ w ] # w historA
 y_d = data[:,2]
 
-# 5 CHECK DATA
-# for i in range(len(data)):
-#     #print(y_d[i])
-    
-
-# 6 TRAIN PERCEPTRON
-
-# initial season
+# INITIAL SEASON
 w = train(data,y_d,w, 0.01)
 w_h.append(w)
 
-# Training
+# TRAINING & REFINE
 err = getTestError(data,y_d,w)
 print('err: ',err)
 period = 0
@@ -84,9 +65,8 @@ while err > 0.07:
     err = getTestError(data,y_d,w)
     print('err: ',err)
     print('period: ',period)
-#print("Error: ", err)
 
-# 7 PLOT line
+# PLOT LINE
 lw = w_h[len(w_h)-1]
 
 dy_dx = -lw[1]/lw[2];
@@ -97,6 +77,5 @@ y = []
 
 for i in range(len(x)):
     y.append(dy_dx*x[i]+b)
-    
 plt.plot(x,y)
 plt.show()
