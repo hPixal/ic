@@ -11,20 +11,13 @@ def train(data,y_d,w, tr):
     for i in range(len(data)):
         
         x = [ -1 , data[i][0] , data[i][1] ]
-
         y_dot = np.dot(w,x)
-        #print(y_dot)
         y = 1 if y_dot > 0 else -1
-
         
-        #print('x =',x)
-        #print('y_d =',y_d[i])
-        #print('y =',y)
         for j in range(len(w)):
-            #print('valor j',j)
-            #print('y_d[i] - y : ', y_d[i] - y)
             w[j] = w[j] + tr/2 * (y_d[i] - y) * x[j]
             
+
         #print(w)
     return w
 
@@ -59,7 +52,7 @@ data = np.genfromtxt(filename, delimiter=',')
 plt.figure()
 for i in range(len(data)):
     plt.plot(data[i][0],data[i][1],'ro')
-plt.show()
+
 
 # 4 GENERATE PERCEPTRON WEIGHTS
 w =  np.random.rand(3)
@@ -84,8 +77,8 @@ w_h.append(w)
 err = getTestError(data,y_d,w)
 print('err: ',err)
 period = 0
-while err > 0.01:
-    w = train(data,y_d,w, 0.005)
+while err > 0.07:
+    w = train(data,y_d,w, 0.02)
     w_h.append(w)
     period = period + 1
     err = getTestError(data,y_d,w)
@@ -94,8 +87,16 @@ while err > 0.01:
 #print("Error: ", err)
 
 # 7 PLOT line
+lw = w_h[len(w_h)-1]
 
-    
-        
-    
+dy_dx = -lw[1]/lw[2];
+b = lw[0]/lw[2];
 
+x = np.linspace(-2,2);
+y = []
+
+for i in range(len(x)):
+    y.append(dy_dx*x[i]+b)
+    
+plt.plot(x,y)
+plt.show()
