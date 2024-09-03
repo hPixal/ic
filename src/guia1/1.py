@@ -36,7 +36,7 @@ def getTestError(data,y_d,w):
     return acum * 1/len(data)
 
 # IMPORT CSV
-filename = 'OR_90_tst.csv'
+filename = 'XOR_trn.csv'
 data = np.genfromtxt(filename, delimiter=',')
 
 # PLOT DATA
@@ -51,7 +51,7 @@ w_h = [ w ] # w historA
 y_d = data[:,2]
 
 # INITIAL SEASON
-w = train(data,y_d,w, 0.01)
+w = train(data,y_d,w, 0.26)
 w_h.append(w)
 
 # TRAINING & REFINE
