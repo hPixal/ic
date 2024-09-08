@@ -1,0 +1,41 @@
+Fixed Inputs: { 
+Fixed Input ID:0, Value:0
+Fixed Input ID:1, Value:0
+Fixed Input ID:2, Value:0
+Fixed Input ID:3, Value:0
+}
+Can't provide perceptron values, no forward output yet.
+Can't provide last results, no forward output yet.
+All Weights: {
+Perceptron ID:0, Weights:[]
+Perceptron ID:1, Weights:[]
+Perceptron ID:2, Weights:[]
+Perceptron ID:3, Weights:[]
+Perceptron ID:4, Weights:[]
+Perceptron ID:5, Weights:[]
+Perceptron ID:6, Weights:[]
+Perceptron ID:7, Weights:[]
+Perceptron ID:8, Weights:[]
+Perceptron ID:9, Weights:[]
+Perceptron ID:10, Weights:[]
+Perceptron ID:11, Weights:[]
+Perceptron ID:12, Weights:[]
+Perceptron ID:13, Weights:[]
+Perceptron ID:14, Weights:[]
+}
+Connections: {
+Perceptron (ID: 0) Outputs to Perceptron (ID:8), 
+Perceptron (ID: 1) Outputs to Perceptron (ID:8), 
+Perceptron (ID: 2) Outputs to Perceptron (ID:9), 
+Perceptron (ID: 3) Outputs to Perceptron (ID:9), 
+Perceptron (ID: 4) Outputs to Perceptron (ID:10), 
+Perceptron (ID: 5) Outputs to Perceptron (ID:10), 
+Perceptron (ID: 6) Outputs to Perceptron (ID:11), 
+Perceptron (ID: 7) Outputs to Perceptron (ID:11), 
+Perceptron (ID: 8) Outputs to Perceptron (ID:12), 
+Perceptron (ID: 9) Outputs to Perceptron (ID:12), 
+Perceptron (ID: 10) Outputs to Perceptron (ID:13), 
+Perceptron (ID: 11) Outputs to Perceptron (ID:13), 
+Perceptron (ID: 12) Outputs to Perceptron (ID:14), 
+Perceptron (ID: 13) Outputs to Perceptron (ID:14), 
+}
