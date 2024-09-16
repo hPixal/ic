@@ -1,190 +1,228 @@
-import NeuronalNetwork as nn
 import numpy as np
+import matplotlib.pyplot as plt
 
-def sigmoid(z):
-        return 1 / (1 + np.exp(-z))
+def Datos(filename):
+    data = np.genfromtxt(filename, delimiter=',')
+    return data
 
-def easy_network_test():
-    net = nn.NeuronalNetwork()
+def Pesos(dim,entradas):
+    capas = len(dim)
+    # Lista de matrices
+    w = np.empty(capas,object)
+    w[0] = np.random.rand(dim[0],entradas+1)-0.5
+    for n in range(1,capas):
+        # Creamos y pushbackeamos matrices de n filas, capas columnas
+        w[n] = np.random.rand(dim[n],dim[n-1]+1)-0.5
+    return w
 
-    # Adding perceptrons and connections
-    perceptron1_id = net.addPerceptron()
-    perceptron2_id = net.addPerceptron()
-    perceptron3_id = net.addPerceptron()
+def sigmoide(v):
+    if (np.isscalar(v)):
+        return np.array([(2/(1+np.exp(-v)))-1])
+    else:
+        y = np.empty(0)
+        for x in v:
+            y = np.append(y, (2/(1+np.exp(-x)))-1)
+        return y
 
-    # Add fixed inputs
-    net.addFixedInput(id=0)
-    net.addFixedInput(id=1)
+def MultiCapaTrain(w,data,epocas,entradas,salidas):
+    capas = len(w) # Se declara la cantidad de capas, para los indices vamos a tener que restarle uno
+    x = data[:,0:entradas]  # se las entradas, data es una matriz  te longitud n, se toma de 0 a entradas
+    yd = data[:,range(entradas,entradas+salidas)] # y deseada es la ultima columna de la matriz data
     
-    # Connect fixed inputs to perceptrons
-    net.connectFixedInput(fixedInputId=1, perceptronId=perceptron1_id)
-    net.connectFixedInput(fixedInputId=0, perceptronId=perceptron1_id)
-    net.connectFixedInput(fixedInputId=1, perceptronId=perceptron2_id)
-    net.connectFixedInput(fixedInputId=0, perceptronId=perceptron2_id)
+    # Constante de aprendizaje
+    u = 0.05
 
-    # Add connections between perceptrons
-    net.addPerceptronConnection(outputPerceptronIDID=perceptron1_id, inputPerceptronIDID=perceptron3_id)
-    net.addPerceptronConnection(outputPerceptronIDID=perceptron2_id, inputPerceptronIDID=perceptron3_id)
+    ## Epocas
 
-    # Update the layer structure
-    net.updateLayerStructure()
+    count = 0
+    while (count < epocas): # Mientras no nos pasemos de la cantidad de epocas predefinidas hacer
+        count += 1 # Contabilizamos la Epoca
+        for i in range(len(x)): # Por cada patron aplicar el forward a cada capa de la red neuronal
+            
+            ### ----------- Forward ----------- ###
+            yi = np.empty(capas,object) # Vector de salidas por capa, tendra el largo de la cantidad de capas
+            xi = np.empty(capas,object) # Vector de entradas por capa 
 
-    # Plot the network
-    net.plot_network()
+            xi[0] = np.insert(x[i],0,-1) # Entrada capa 0 se añade -1 por los biases
+            v0 = np.dot(w[0],xi[0])  # Resultado capa 0 se hace producto punto de los w y las entradas de la capa 0
+                                                    # aun no es un forward porque no aplicamos la sigmoidea a los resultados
+            
+            # Corregimos la salida
+            yi[0] = sigmoide(v0) # Salida capa 0 ahora si habiendo aplicado la sigmoidea
+
+            # Demas capas
+            for j in range(1,capas): # Repetir el mismo proceso para el resto de capas 
+                xi[j] = np.insert(yi[j-1],0,-1) # TODO: CORREGIR
+                vj = np.dot(w[j],xi[j])
+                yi[j] = sigmoide(vj)
+
+            # Ahora ya tenemos las salidas de las capas, en la matriz, la ultima será la salida de la red
+            ### ----------- Backward ----------- ###
+            # Calcular los delta
+            dW = np.zeros_like(w)   # Inicializamos un vector que va a contener los valores por los 
+                                                    # que vamos a corregir los pesos
+            dd = np.zeros_like(yi)   # Almacenamos los deltas
+
+            ## Salida
+            capaF = capas-1 # Para no repetir
+            dd[capaF] = (yd[i]-yi[capaF])*(1+yi[capaF])*(1-yi[capaF])*(1/2) # delta^2 ultima capa
+
+            # Calculamos todos los delta
+            for j in range(capas-1,0,-1): #  Recorremos en reversa la red neuronal 
+                wj = w[j][:,1:].T                    #  Transponemos el renglon de pesos correspondiente a la capa
+                dd[j-1] = np.dot(wj,dd[j])*(1+yi[j-1])*(1-yi[j-1])*(1/2) # Almacenamos los delta^2 calculados
+            
+            # Calculamos la actualizacion de pesos
+            for j in range(capas):
+                dW[j] = u*np.outer(dd[j],xi[j]) # Creamos la matriz  para corregir la matriz de pesos original
+
+            ## Actualizar los pesos
+            w = w + dW 
+        
+        ### ----------- Chequeo de sol ----------- ### 
+        # Aca hacemos un forward con la data y comparamos la salida esperada con la salida de la red
+        correct = 0
+        for i in range(len(x)):
+            yi = np.empty(capas,object) # Vector de salidas por capa
+            xi = np.empty(capas,object) # Vector de entradas a las capas
+
+            xi[0] = np.insert(x[i],0,-1) # Entrada capa 0
+            v0 = np.dot(w[0],xi[0]) # Resultado capa 0
+            
+            # Corregimos la salida
+            yi[0] = sigmoide(v0) # Salida capa 0
+
+            # Demas capas
+            for j in range(1,capas):
+                xi[j] = np.insert(yi[j-1],0,-1)
+                vj = np.dot(w[j],xi[j])
+                yi[j] = sigmoide(vj)
+            
+            correct += 1
+            for k in range(len(yi[-1])):    # TODO: Corregir WINNER TAKE ALL
+                if (yd[i][k]*yi[-1][k] < 0):
+                    correct += -1
+                    break
+        
+        presicion = correct/len(x)
+        print("iteracion " + str(count) + ": " + str(presicion))
+        if (presicion > 0.99):
+            print("El algoritmo alcanzo una precision de: " + str(presicion*100) + "'%' en " + str(count) + " epocas, con los siguientes pesos:")
+            for aux in w:
+                print(aux)
+            return w
+        
+    print("El algoritmo no alcanzo la precision deseada: " + str(presicion))
+    for aux in w:
+        print(aux)
+    return w
+
+
+def MultiCapaTest(w,data,entradas,salidas):
+    capas = len(w)
+    x = data[:,0:entradas]
+    yd = data[:,range(entradas,entradas+salidas)]
+
+    #prediccion = np.empty(len(x),object)
+    correct = 0
+    for i in range(len(x)):
+        yi = np.empty(capas,object) # Vector de salidas por capa
+        xi = np.empty(capas,object) # Vector de entradas a las capas
+
+        xi[0] = np.insert(x[i],0,-1) # Entrada capa 0
+        v0 = np.dot(w[0],xi[0]) # Resultado capa 0
+        
+        # Corregimos la salida
+        yi[0] = sigmoide(v0) # Salida capa 0
+
+        # Demas capas
+        for j in range(1,capas):
+            xi[j] = np.insert(yi[j-1],0,-1)
+            vj = np.dot(w[j],xi[j])
+            yi[j] = sigmoide(vj)
+        
+        #prediccion[i] = yi
+        correct += 1
+        for k in range(len(yi[-1])):
+            if (yd[i][k]*yi[-1][k] < 0):
+                correct += -1
+                break
     
-def complex_network_test():
-    net = nn.NeuronalNetwork()
+    presicion = correct/len(x)
+    print("El algoritmo alcanzo una precision de: " + str(presicion*100) + "'%' en el test")
+    #return prediccion
 
-    # Adding perceptrons
-    perceptron_ids = [net.addPerceptron() for _ in range(15)]  # Assume 5 inputs per perceptron
-
-    # Add fixed inputs
-    for i in range(4):
-        net.addFixedInput(i)
-
-    # Connect fixed inputs to multiple first-layer perceptrons
-    net.connectFixedInput(fixedInputId=0, perceptronId=perceptron_ids[0])
-    net.connectFixedInput(fixedInputId=0, perceptronId=perceptron_ids[1])
-    net.connectFixedInput(fixedInputId=1, perceptronId=perceptron_ids[2])
-    net.connectFixedInput(fixedInputId=1, perceptronId=perceptron_ids[3])
-    net.connectFixedInput(fixedInputId=2, perceptronId=perceptron_ids[4])
-    net.connectFixedInput(fixedInputId=2, perceptronId=perceptron_ids[5])
-    net.connectFixedInput(fixedInputId=3, perceptronId=perceptron_ids[6])
-    net.connectFixedInput(fixedInputId=3, perceptronId=perceptron_ids[7])
-
-    # Add complex connections between first layer and second layer perceptrons
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[0], inputPerceptronID=perceptron_ids[8])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[1], inputPerceptronID=perceptron_ids[8])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[2], inputPerceptronID=perceptron_ids[9])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[3], inputPerceptronID=perceptron_ids[9])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[4], inputPerceptronID=perceptron_ids[10])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[5], inputPerceptronID=perceptron_ids[10])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[6], inputPerceptronID=perceptron_ids[11])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[7], inputPerceptronID=perceptron_ids[11])
-
-    # Connecting second layer perceptrons to third layer perceptrons
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[8], inputPerceptronID=perceptron_ids[12])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[9], inputPerceptronID=perceptron_ids[12])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[10], inputPerceptronID=perceptron_ids[13])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[11], inputPerceptronID=perceptron_ids[13])
-
-    # Connecting third layer perceptrons to the final perceptron
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[12], inputPerceptronID=perceptron_ids[14])
-    net.addPerceptronConnection(outputPerceptronID=perceptron_ids[13], inputPerceptronID=perceptron_ids[14])
-
-    # Update the layer structure
-    net.updateLayerStructure()
-
-    # Plot the network if plotting is enabled
-    if net.enableGraph:
-        net.plot_network()
-    net.dumpCurrentNetworkInfoToFile()
-
-def test_forward():
-    # Initialize the neural network
-    net = nn.NeuronalNetwork()
+def ej1():
+    # Ejercicio 1
+    trn = Datos('XOR_trn.csv')
+    tst = Datos('XOR_tst.csv')
+    estr = [2,1]
+    entradas = len(trn[0])-estr[-1]
+    w = Pesos(estr,entradas)
     
-    net.disableAutomaticBiases()
-
-    # Add perceptrons to the network
-    net.addPerceptron(0)  # Input layer perceptron
-    net.addPerceptron(1)  # Hidden layer perceptron
-    net.addPerceptron(2)  # Output layer perceptron
-
-    # Add fixed input to perceptron 0
-    net.addFixedInput(0)
-    net.setInputValue(0, 1.0)  # Set fixed input to 1.0
-
-    # Connect fixed input 0 to perceptron 0
-    net.connectFixedInput(0, 0)
-
-    # Connect perceptrons 0 -> 1, 1 -> 2
-    net.addPerceptronConnection(0, 1)
-    net.addPerceptronConnection(1, 2)
-
-    # Set weights for perceptrons manually for testing
-    net.setPerceptronWeights(0,[0.5])  # Perceptron 0 has one input
-    net.setPerceptronWeights(1,[0.4])  # Perceptron 1 has one input
-    net.setPerceptronWeights(2,[0.6])  # Perceptron 2 has one input
+    print("Pesos iniciales:")
+    for x in w:
+        print(x)
+    print("")
     
-    # POST SETTING UP VALUES
-    net.printAllWeights()
-    net.printFixedInputs()
+    w = MultiCapaTrain(w,trn,100,entradas,estr[-1])
+    MultiCapaTest(w,tst,entradas,estr[-1])
 
+def ej2():
+    # Ejercicio 2
+    trn2 = Datos("concent_trn.csv")
+    tst2 = Datos("concent_tst.csv")
+    estr2 = [4,1]
+    entradas2 = len(trn2[0])-estr2[-1]
+    w2 = Pesos(estr2,entradas2)
+    MultiCapaTest(w2,trn2,entradas2,estr2[-1])
+    w2 = MultiCapaTrain(w2,trn2,3,entradas2,estr2[-1])
+        # Crear el gráfico
+    plt.figure()
+    #
+    for x in trn2:
+        if (x[2] > 0):
+            plt.scatter(x[0], x[1], color='blue', marker='x')
+        else:
+            plt.scatter(x[0], x[1], color='red')
+           
+    x_line = np.linspace(-1, 1, 100)
+    y_line = - w2[0][0][2]/w2[0][0][1] * x_line + w2[0][0][0]/w2[0][0][1]
     
-    net.updateLayerStructure()
-    #net.plot_network()
-    # Run forward pass
-    output = net.forward()
-
-    # Check the output values
-    perceptrons_outs = []
-    perceptrons_outs.append(net.perceptrons[0].forward())
-    perceptrons_outs.append(net.perceptrons[1].forward())
-    perceptrons_outs.append(net.perceptrons[2].forward())
+    plt.plot(x_line,y_line,color='black')
     
-    print("Output of perceptron 0:", perceptrons_outs[0])
-    print("Output of perceptron 1:", perceptrons_outs[1])
-    print("Output of perceptron 2:", perceptrons_outs[2])
-
-    # Expected forward pass values (based on perceptron weights and inputs)
-    expected_output_0 = sigmoid( 1.0 * 0.5 )  # Perceptron 0 output
-    expected_output_1 = sigmoid(expected_output_0 * 0.4)  # Perceptron 1 output
-    expected_output_2 = sigmoid(expected_output_1 * 0.6)  # Perceptron 2 output
-
-    assert np.isclose(output[0], expected_output_0), f"Expected {expected_output_0}, got {output[0]}"
-    assert np.isclose(output[1], expected_output_1), f"Expected {expected_output_1}, got {output[1]}"
-    assert np.isclose(output[2], expected_output_2), f"Expected {expected_output_2}, got {output[2]}"
-
-    print("Forward propagation test passed.")
-    net.dumpCurrentNetworkInfoToFile()
-
-import numpy as np
-
-def test_random_network():
-    # Initialize the neural network
-    net = nn.NeuronalNetwork()
-
-    # Create some fixed inputs
-    num_fixed_inputs = 3
-    for i in range(num_fixed_inputs):
-        net.addFixedInput(i)
-
-    # Create some perceptrons
-    num_perceptrons = 5
-    for i in range(num_perceptrons):
-        net.addPerceptron(i)
-
-    # Connect fixed inputs to perceptrons randomly
-    for i in range(num_fixed_inputs):
-        perceptron_id = np.random.randint(0, num_perceptrons)
-        net.connectFixedInput(i, perceptron_id)
-
-    # Randomly connect perceptrons to each other
-    for i in range(num_perceptrons):
-        output_perceptron = i
-        input_perceptron = np.random.randint(0, num_perceptrons)
-        if output_perceptron != input_perceptron:
-            net.addPerceptronConnection(output_perceptron, input_perceptron)
-
-    # Set random values to fixed inputs
-    for i in range(num_fixed_inputs):
-        random_value = np.random.rand()
-        net.setInputValue(i, random_value)
-        print(f"Fixed Input {i} value set to {random_value}")
-
-    # Update the layer structure of the network before forward pass
-    net.updateLayerStructure()
-
-    # Perform forward propagation and print the outputs
-    outputs = net.forward()
-    print("\nOutputs from forward propagation:")
-    for perceptron_id, output in outputs.items():
-        print(f"Perceptron {perceptron_id}: {output}")
+    y1_line = - w2[0][1][2]/w2[0][1][1] * x_line + w2[0][1][0]/w2[0][1][1]
     
-    net.plot_network()
+    plt.plot(x_line,y1_line,color='green')
+    y2_line = - w2[0][2][2]/w2[0][2][1] * x_line + w2[0][2][0]/w2[0][2][1]
+    
+    plt.plot(x_line,y2_line,color='black')
+    
+    y3_line = - w2[0][3][2]/w2[0][3][1] * x_line + w2[0][3][0]/w2[0][3][1]
+    
+    plt.plot(x_line,y3_line,color='green')
+    #    Añadir etiquetas y título
+    plt.title('Gráfico de Puntos de Prueba')
+    #plt.xlim([0, 1])
+    #plt.ylim([0, 1])
+    plt.xlabel('X1')
+    plt.ylabel('X2')
+    #plt.legend()
+    
+    # Mostrar el gráfico
+    plt.grid(True)
+    plt.show()
+    
+def ej3():
+    ### Ejercicio 3
 
-# Run the test
-test_forward()
+    trn3 = Datos("irisbin_trn.csv")
+    tst3 = Datos("irisbin_tst.csv")
+    estr3 = [1,3]
+    entradas3 = len(trn3[0])-estr3[-1]
+    w3 = Pesos(estr3,entradas3)
+    w3 = MultiCapaTrain(w3,trn3,100,entradas3,estr3[-1])
 
-# complex_network_test()
+    MultiCapaTest(w3,tst3,entradas3,estr3[-1])
+     
+ej3()

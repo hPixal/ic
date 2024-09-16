@@ -36,7 +36,7 @@ def getTestError(data,y_d,w):
     return acum * 1/len(data)
 
 # IMPORT CSV
-filename = 'XOR_trn.csv'
+filename = 'OR_trn.csv'
 data = np.genfromtxt(filename, delimiter=',')
 
 # PLOT DATA
