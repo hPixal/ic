@@ -1,53 +1,42 @@
-import numpy as np
 from sklearn.model_selection import KFold
-from sklearn.metrics import accuracy_score
-import SOM
+import numpy as np
+import SOM as SOM
 
-def import_data(filename):
-    data = np.genfromtxt(filename, delimiter=',')
-    return data
+def import_circles():
+    X = np.genfromtxt('circulo.csv', delimiter=',')
+    return X
 
+def import_te():
+    X = np.genfromtxt('te.csv', delimiter=',')
+    return X
 
-circulo = import_data("circulo.csv")
-t = import_data("te.csv")
+def import_iris():
+    data = np.loadtxt("your_iris_data.csv", delimiter=",")
+    X = data[:, :4]  
+    Y = data[:, 4:] 
+    return X,Y
 
-
-def circulo_som(circulo):
-    k = 5
-    kf = KFold(n_splits=k, shuffle=True, random_state=42)
-    ACCk = np.zeros(k)
-    som = SOM.SOM(10, 10, 2, 0.2)
+def ejercicio1():
+    # CONFIGURACION ---------------------------------------------------------
     
-    for fold, (train_index, test_index) in enumerate(kf.split(circulo)):
-        # Crear conjuntos de entrenamiento y prueba para esta iteración
-        x_train, x_test = circulo[train_index], circulo[test_index]
-        _, y_test = circulo[train_index], circulo[test_index]
-        
-        som.learn(x_train, True)
-        y_pred = som.predict(x_test)
-
-        ACCk[fold] = accuracy_score(y_test,y_pred)
-
-    return som
-
-
-def t_som(t):
-    k = 5
-    kf = KFold(n_splits=k, shuffle=True, random_state=44)
-    # ACCk = np.zeros(k)
-    som = SOM.SOM(10, 10, 2, 0.2)
+    # Importar datos para entrenar
+    X_circ = import_circles()   # Datos circulo
+    X_te = import_te()          # Datos T
+    epochs = 2000               # Epocas
+    lr = 0.2                    # Taza de aprendizaje
     
-    for fold, (train_index, test_index) in enumerate(kf.split(t)):
-        # Crear conjuntos de entrenamiento y prueba para esta iteración
-        x_train, x_test = t[train_index], t[test_index]
-        _, y_test = t[train_index], t[test_index]
-        
-        
-        som.learn(x_train, True)
-        # ACCk[fold] = accuracy_score(y_test,y_pred)
-
-    return som
-
-# circulo_som(circulo)
-t_som(t)
-
+    # ENTRENAR MODELO CIRCULO -----------------------------------------------
+    # 1 | Crear modelo
+    modelCircle = SOM.SOM(6,6,2,lr=lr,radius=None,epochs=epochs)
+    
+    # 2 | Entrenar modelo
+    modelCircle.learn(X_circ,visualize=True)
+    
+    # ENTRENAR MODELO T ----------------------------------------------------
+    # 1 | Crear modelo
+    modelTE = SOM.SOM(6,6,2,lr=lr,radius=None,epochs=epochs)
+    
+    # 2 | Entrenar modelo
+    modelTE.learn(X_te,visualize=True)
+    
+ejercicio1()

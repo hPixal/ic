@@ -11,6 +11,14 @@ class KMeans:
         self.centroids = None       # Contenedor de centroides
         self.fig, self.axes = None, None  # To keep track of the same window
 
+    #################### UTILS ####################
+
+    def closest_centroid(self, sample):
+        # Para cada punto determino el indice del centroide mas cercano 
+        distances = [self.euclidean_distance(sample, centroid) for centroid in self.centroids]
+        
+        # Retorno el indice de dicho centroide
+        return np.argmin(distances)
     
     def euclidean_distance(self,a, b):
         # Formula de distancia euclidea
@@ -22,11 +30,15 @@ class KMeans:
         indices = np.random.choice(len(X), self.k, replace=False)
         return X[indices]
     
+    #################### ASSIGN CLUSTER ####################
+    
     def assign_clusters(self,X):
         dist = np.zeros(len(self.centroids)-1)
         for i in self.centroids:
             dist[i] = self.euclidean_distance(X,self.centroids[i])
         return np.argmin(dist)
+    
+    #################### FIT ####################
     
     def fit(self, X,plot=True):
         # Paso 1: Inicializo los centroides tomando posiciones aleatorias del
@@ -44,7 +56,7 @@ class KMeans:
             
             # Step 4: Checkeo que la distancia de actualizacion sea mayor a la tolerancia
             #         caso contrario consideramos que ya termino
-            if self.is_converged(new_centroids):
+            if self.has_converged(new_centroids):
                 break
                 
             self.centroids = new_centroids  # Update centroids
@@ -55,9 +67,14 @@ class KMeans:
         if plot is True:
             self.plot_clusters(X, clusters, iteration=i)
             plt.show()
+            
+    #################### PREDICT ####################
     
     def predict(self, X):
+        # Predecir es basicamente clasificar un nuevo punto
         return self.assign_cluster(X)
+    
+    #################### CLUSTERS ####################
     
     def create_clusters(self, X):
         # Inicializo el vector con K vectores vacios
@@ -77,12 +94,7 @@ class KMeans:
         # los indices de los puntos contenidos por el conjunto
         return clusters
     
-    def closest_centroid(self, sample):
-        # Para cada punto determino el indice del centroide mas cercano 
-        distances = [self.euclidean_distance(sample, centroid) for centroid in self.centroids]
-        
-        # Retorno el indice de dicho centroide
-        return np.argmin(distances)
+    #################### MAKE CENTROIDS ####################
     
     def calculate_centroids(self, X, clusters):
         # Actulizar la posicion de los centroides
@@ -102,7 +114,7 @@ class KMeans:
         # Retorno los nuevos centroides
         return centroids
     
-    def is_converged(self, new_centroids):
+    def has_converged(self, new_centroids):
         # Checkeo si es que la distancia euclidea del nuevo conjunto de centroides
         # es menor a la tolerancia establecida para establecer una condicion de
         # convergencia
@@ -154,43 +166,3 @@ class KMeans:
         plt.draw()
         plt.pause(0.5)
         
-    # def plot_clusters(self, X, clusters, iteration=None):
-    #     plt.clf()
-    #     colors = ['red', 'blue', 'green', 'yellow', 'purple']
-    #     
-    #     n_features = X.shape[1]
-    #     
-    #     # Generate all pairwise combinations of features
-    #     feature_pairs = list(combinations(range(n_features), 2))
-    #     
-    #     num_plots = len(feature_pairs)
-    #     fig, axes = plt.subplots(1, num_plots, figsize=(5*num_plots, 5))
-# 
-    #     if num_plots == 1:
-    #         axes = [axes]  # Ensure it's a list for single plot case
-    #     
-    #     for idx, (i, j) in enumerate(feature_pairs):
-    #         ax = axes[idx]
-    #         
-    #         # Plot clusters for the pair (i, j)
-    #         for cluster_idx, cluster in enumerate(clusters):
-    #             points = X[cluster]
-    #             ax.scatter(points[:, i], points[:, j], color=colors[cluster_idx % len(colors)], label=f'Cluster {cluster_idx + 1}')
-    #         
-    #         # Plot the centroids
-    #         for centroid_idx, centroid in enumerate(self.centroids):
-    #             ax.scatter(centroid[i], centroid[j], s=300, c='black', marker='x', label=f'Centroid {centroid_idx + 1}')
-    #         
-    #         # Voronoi diagram for the selected pair of features
-    #         vor = Voronoi(self.centroids[:, [i, j]])
-    #         voronoi_plot_2d(vor, ax=ax, show_vertices=False, line_colors='black')
-    #         
-    #         ax.set_title(f"Feature {i+1} vs Feature {j+1} (Iteration #{iteration})")
-    #         ax.set_xlabel(f'Feature {i+1}')
-    #         ax.set_ylabel(f'Feature {j+1}')
-    #         ax.legend()
-    #     
-    #     plt.suptitle(f"K-Means Clustering (Iteration #{iteration})")
-    #     plt.tight_layout()
-    #     plt.draw()
-    #     plt.pause(0.5)

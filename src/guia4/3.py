@@ -2,10 +2,24 @@ from sklearn.datasets import load_iris
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Cargar el conjunto de datos Iris
-iris = load_iris()
-X = iris.data
+
+def import_circles():
+    X = np.genfromtxt('circulo.csv', delimiter=',')
+    return X
+
+def import_te():
+    X = np.genfromtxt('te.csv', delimiter=',')
+    return X
+
+def import_iris():
+    data = np.loadtxt("irisbin_trn.csv", delimiter=",")
+    X = data[:, :4]  
+    Y = data[:, 4:] 
+    return X,Y
+
+X,_ = import_iris()
 
 # Valores de k a probar
 k_values = range(2, 11)
